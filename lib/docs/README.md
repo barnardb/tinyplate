@@ -46,11 +46,7 @@ print(templateString)
 println("```")
 ```
 
-You read it from a file or resource or database or something: 
-
-How will you render this? Maybe you've done a quick search and found bloated libraries like [scalate](https://github.com/scalate/scalate) that you couldn't quickly get working out of the box. Or you tried some classics like [StringTemplate](https://www.stringtemplate.org/) or [mustache.java](https://github.com/spullara/mustache.java), but their behaviour of silently ignoring typos in tags like `{{versoin}}` (that aren't in your model) makes you cringe.
-
-You want something simple. You want it to fail when you've messed up, rather than silently move on.
+How will you render this? Maybe you've done a quick search and found bloated libraries like [scalate](https://github.com/scalate/scalate) that you couldn't quickly get working out of the box. Or you tried some classics like [StringTemplate](https://www.stringtemplate.org/) or [mustache.java](https://github.com/spullara/mustache.java), but their behaviour of silently ignoring typos in tags like `{{versoin}}` (that aren't in your model) makes you cringe. You want something simple. You want it to fail when you've messed up, rather than silently move on.
 
 You want Tinyplate:
 
@@ -60,7 +56,7 @@ val template = tinyplate.Template(templateString)
 
 Now you're ready to render your model.
 
-Let's say you're model type is a mix of ADTs and `Map[String, _]`s:
+Let's say your model type is a mix of ADTs and `Map[String, _]`s:
 
 ```scala mdoc
 case class Release(metadata: Map[String, Any], version: Int, changes: Seq[Change])
