@@ -10,7 +10,7 @@ TL;DR
 import tinyplate.Template
 
 val template: Template = Template("This is a {{subject.name}} {{subject.type}}")
-// template: Any => String = tinyplate.Template$$$Lambda$1289/0x0000000801833840@3c544c9
+// template: Any => String = tinyplate.Template$$$Lambda$1289/0x0000000801833840@604f376a
 
 val result = template(Map(
   "object" -> "success",
@@ -131,3 +131,29 @@ val rendered = template(model)
 ```
 
 Done!
+
+Oh, but what if you make a mistake?
+
+```scala
+tinyplate.Template("This is version {{meta.versoin}}.")(Map(
+  "meta" -> Map(
+    "version" -> 7
+  )
+))
+// java.lang.RuntimeException: Error using accessor: meta.versoin
+// 	at tinyplate.Accessor$.$anonfun$wrapExceptions$1(Accessor.scala:15)
+// 	at tinyplate.Template$.$anonfun$dynamic$1(Template.scala:14)
+// 	at tinyplate.Template$.$anonfun$apply$7(Template.scala:42)
+// 	at scala.collection.immutable.List.map(List.scala:223)
+// 	at scala.collection.immutable.List.map(List.scala:79)
+// 	at tinyplate.Template$.$anonfun$apply$6(Template.scala:42)
+// 	at repl.Session$App0$$anonfun$13.apply(README.md:119)
+// 	at repl.Session$App0$$anonfun$13.apply(README.md:117)
+// Caused by: java.util.NoSuchElementException: key not found: versoin
+// 	at scala.collection.immutable.Map$Map1.apply(Map.scala:240)
+// 	at tinyplate.Accessor$.$anonfun$apply$1(Accessor.scala:7)
+// 	at scala.Function1.$anonfun$andThen$1(Function1.scala:85)
+// 	... 8 more
+```
+
+Phew, safe!

@@ -94,3 +94,17 @@ You render it:
 ```scala mdoc
 val rendered = template(model)
 ```
+
+Done!
+
+Oh, but what if you make a mistake?
+
+```scala mdoc:crash
+tinyplate.Template("This is version {{meta.versoin}}.")(Map(
+  "meta" -> Map(
+    "version" -> 7
+  )
+))
+```
+
+Phew, safe!
