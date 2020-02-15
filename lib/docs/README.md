@@ -95,7 +95,7 @@ You render it:
 val rendered = template(model)
 ```
 
-Oh, we you use the timestamp. Well, let's have another go at the first line of the release announcement:
+Oh, you forgot to use the timestamp. Well, let's have another go at the first line of the release announcement:
 
 ```scala mdoc
 tinyplate.Template("<h1>{{metadata.timestamp}} {{metadata.title}}</h1>")(model)
