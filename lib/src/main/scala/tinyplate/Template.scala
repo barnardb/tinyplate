@@ -13,7 +13,7 @@ object Template {
   def dynamic(accessor: Accessor, format: PartialFunction[Any, String]): Template =
     value => format.applyOrElse(accessor(value), (v: Any) => v.toString)
 
-  def apply(template: String, format: PartialFunction[Any, String]): Template = {
+  def apply(template: String, format: PartialFunction[Any, String] = PartialFunction.empty): Template = {
     val matcher = Tag.matcher(template)
     var position = 0
 
