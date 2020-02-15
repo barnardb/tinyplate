@@ -10,7 +10,7 @@ TL;DR
 import tinyplate.Template
 
 val template: Template = Template("This is a {{subject.name}} {{subject.type}}")
-// template: Any => String = tinyplate.Template$$$Lambda$1289/0x0000000801833840@604f376a
+// template: Any => String = tinyplate.Template$$$Lambda$1317/0x000000080184b840@50672905
 
 val result = template(Map(
   "object" -> "success",
@@ -130,7 +130,23 @@ val rendered = template(model)
 // """
 ```
 
-Done!
+Oh, we you use the timestamp. Well, let's have another go at the first line of the release announcement:
+
+```scala
+tinyplate.Template("<h1>{{metadata.timestamp}} {{metadata.title}}</h1>")(model)
+// res4: String = "<h1>1970-01-01 01:00:00.0 Feature-Complete!</h1>"
+```
+
+Hmm, you don't really want the full time in there, do you? No worries, you can specify how some types should be formatted by passing a partial function when you create the template:
+
+```scala
+tinyplate.Template("<h1>{{metadata.timestamp}} {{metadata.title}}</h1>", {
+  case ts: java.sql.Timestamp => ts.toLocalDateTime.toLocalDate.toString
+})(model)
+// res5: String = "<h1>1970-01-01 Feature-Complete!</h1>"
+```
+
+Ah, much better!
 
 Oh, but what if you make a mistake?
 
@@ -147,8 +163,8 @@ tinyplate.Template("This is version {{meta.versoin}}.")(Map(
 // 	at scala.collection.immutable.List.map(List.scala:223)
 // 	at scala.collection.immutable.List.map(List.scala:79)
 // 	at tinyplate.Template$.$anonfun$apply$6(Template.scala:42)
-// 	at repl.Session$App0$$anonfun$13.apply(README.md:119)
-// 	at repl.Session$App0$$anonfun$13.apply(README.md:117)
+// 	at repl.Session$App0$$anonfun$16.apply(README.md:133)
+// 	at repl.Session$App0$$anonfun$16.apply(README.md:131)
 // Caused by: java.util.NoSuchElementException: key not found: versoin
 // 	at scala.collection.immutable.Map$Map1.apply(Map.scala:240)
 // 	at tinyplate.Accessor$.$anonfun$apply$1(Accessor.scala:7)

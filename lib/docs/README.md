@@ -95,7 +95,21 @@ You render it:
 val rendered = template(model)
 ```
 
-Done!
+Oh, we you use the timestamp. Well, let's have another go at the first line of the release announcement:
+
+```scala mdoc
+tinyplate.Template("<h1>{{metadata.timestamp}} {{metadata.title}}</h1>")(model)
+```
+
+Hmm, you don't really want the full time in there, do you? No worries, you can specify how some types should be formatted by passing a partial function when you create the template:
+
+```scala mdoc
+tinyplate.Template("<h1>{{metadata.timestamp}} {{metadata.title}}</h1>", {
+  case ts: java.sql.Timestamp => ts.toLocalDateTime.toLocalDate.toString
+})(model)
+```
+
+Ah, much better!
 
 Oh, but what if you make a mistake?
 
