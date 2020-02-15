@@ -1,8 +1,10 @@
+import VersionDependent.{Constant, Split}
 import coursier.core.Version
 import mill._
-import mill.define.Target
 import mill.scalalib._
 import os.Path
+
+import scala.collection.generic.CanBuildFrom
 
 val scalaVersions = Seq(
   //  "2.10.7",
@@ -24,55 +26,94 @@ object lib extends Cross[LibModule](scalaVersions: _*) {
 class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocModule {
   override def mdocVersion = "2.1.1"
 
-  override def scalacOptions = Seq(
-    "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
-    "-encoding", "utf-8",                // Specify character encoding used by source files.
-    "-explaintypes",                     // Explain type errors in more detail.
-    "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
-    "-language:existentials",            // Existential types (besides wildcard types) can be written and inferred
-    "-language:experimental.macros",     // Allow macro definition (besides implementation and application)
-    "-language:higherKinds",             // Allow higher-kinded types
-    "-language:implicitConversions",     // Allow definition of implicit functions called views
-    "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
-    "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
-    "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
-    "-Xlint",
-    "-Ywarn-dead-code",                  // Warn when dead code is identified.
-    "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-    "-Ywarn-unused",
-    "-Ywarn-value-discard",               // Warn when non-Unit expression results are unused.
-  ) ++ VersionDependent.Split[Seq[String]](
-    oldValue = Seq(
+  override def scalacOptions = VersionDependent.resolve(Version(crossScalaVersion))(
+    Seq(
+      "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
+      "-encoding", "utf-8",                // Specify character encoding used by source files.
+      "-explaintypes",                     // Explain type errors in more detail.
+      "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
+      "-language:existentials",            // Existential types (besides wildcard types) can be written and inferred
+      "-language:experimental.macros",     // Allow macro definition (besides implementation and application)
+      "-language:higherKinds",             // Allow higher-kinded types
+      "-language:implicitConversions",     // Allow definition of implicit functions called views
+      "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
+      "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
+      "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
+      "-Xlint",
+      "-Ywarn-dead-code",                  // Warn when dead code is identified.
+      "-Ywarn-numeric-widen",              // Warn when numerics are widened.
+      "-Ywarn-value-discard",               // Warn when non-Unit expression results are unused.
     ),
-    fromVersion = "2.12",
-    newValue = Seq(
-      "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
+    VersionDependent.Split[Seq[String]](
+      oldValue = Seq(
+        "-Xfuture",                          // Turn on future language features.
+        "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
+        "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
+        "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+        "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
+      ),
+      fromVersion = "2.13",
+      newValue = Nil,
     ),
-  )(crossScalaVersion) ++ VersionDependent.Split[Seq[String]](
-    oldValue = Seq(
-      "-Xfuture",                          // Turn on future language features.
-      "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-      "-Ypartial-unification",             // Enable partial unification in type constructor inference
-      "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
-      "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
-      "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-      "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-    ),
-    fromVersion = "2.13",
-    newValue = Seq(),
-  )(crossScalaVersion)
+    CompilerOptions.`-Ywarn-unused`,
+    CompilerOptions.`-Ywarn-extra-implicit`,
+    CompilerOptions.`-Ypartial-unification`,
+    CompilerOptions.`-Ywarn-infer-any`,
+  ).flatten[String]
 }
 
-sealed abstract class VersionDependent[A](val apply: Version => A) {
+object CompilerOptions {
+  def apply(fromVersion: Version, value: String, untilVersion: Version): VersionDependent[Seq[String]] =
+    VersionDependent.range(Nil, fromVersion, Seq(value), untilVersion)
+  def apply(fromVersion: Version, value: String): VersionDependent[Seq[String]] =
+    Split(Constant(Nil), fromVersion, Constant(Seq(value)))
+  def apply(value: String, untilVersion: Version): VersionDependent[Seq[String]] =
+    Split(Constant(Seq(value)), untilVersion, Constant(Nil))
+
+  val `-Ywarn-unused` = apply(Version("2.11"), "-Ywarn-unused")
+  val `-Ywarn-extra-implicit` = apply(Version("2.12"), "-Ywarn-extra-implicit")
+  val `-Ypartial-unification` = apply(Version("2.11"), "-Ypartial-unification", Version("2.13")) // Enable partial unification in type constructor inference
+  val `-Ywarn-infer-any` = apply(Version("2.11"), "-Ywarn-infer-any", Version("2.13")) // Warn when a type argument is inferred to be `Any`.
+}
+
+System.err.println(scala.util.Properties.versionString)
+
+//final class IterableVersionDependent[A <: Iterable[_]](private val value: VersionDependent[A]) { //TODO extends AnyVal
+////  def ++[B >: A <: Iterable[_]](rhs: VersionDependent[B]): VersionDependent[B] =
+////    new VersionDependent(v => value(v) ++ rhs(v))
+//}
+
+class VersionDependent[+A](select: Version => A) {
+  final def apply(scalaVersion: Version): A = select(scalaVersion)
   final def apply(scalaVersion: String): A = apply(Version(scalaVersion))
 }
 
 object VersionDependent {
   implicit def apply[A](value: A): VersionDependent[A] = Constant(value)
+  implicit def range[A](default: A, fromVersion: String, value: A, untilVersion: String): VersionDependent[A] =
+    range(default, Version(fromVersion), value, Version(untilVersion))
+  implicit def range[A](default: A, fromVersion: Version, value: A, untilVersion: Version): VersionDependent[A] =
+    Split(
+      Constant(default),
+      fromVersion,
+      Split(
+        Constant(value),
+        untilVersion,
+        Constant(default)
+      )
+    )
+  def transpose[A, M[X] <: TraversableOnce[X]](in: M[VersionDependent[A]])(implicit cbf: CanBuildFrom[M[VersionDependent[A]], A, M[A]]): VersionDependent[M[A]] =
+    new VersionDependent(resolve(_, in))
 
-  case class Constant[A](value: A) extends VersionDependent[A](_ => value)
+  def resolve[A](version: Version)(in: VersionDependent[A]*)(implicit cbf: CanBuildFrom[Seq[VersionDependent[A]], A, Seq[A]]): Seq[A] =
+    resolve(version, in)
 
-  case class Split[A](oldValue: VersionDependent[A], fromVersion: Version, newValue: VersionDependent[A]) extends
+  def resolve[A, M[X] <: TraversableOnce[X]](version: Version, in: M[VersionDependent[A]])(implicit cbf: CanBuildFrom[M[VersionDependent[A]], A, M[A]]): M[A] =
+    in.foldLeft(cbf(in))((as, vda) => as += vda(version)).result()
+
+  case class Constant[+A](value: A) extends VersionDependent[A](_ => value)
+
+  case class Split[+A](oldValue: VersionDependent[A], fromVersion: Version, newValue: VersionDependent[A]) extends
     VersionDependent[A](v => (if (v < fromVersion) oldValue else newValue)(v))
 
   object Split {
@@ -85,6 +126,7 @@ object VersionDependent {
 // TODO upstream PR
 import coursier.MavenRepository
 import mill.scalalib._
+
 import scala.util.matching.Regex
 
 /**
