@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 import scala.util.matching.Regex
 
 object Template {
-  val Tag: Pattern = "\\{\\{([^}]+)\\}\\}".r.pattern
+  val DefaultTagPattern: Pattern = "\\{\\{([^}]+)\\}\\}".r.pattern
   val KeywordValue: Regex = "([^} ]+) ([^}]+)".r
 
   def literal(value: String): Template = _ => value
@@ -13,8 +13,8 @@ object Template {
   def dynamic(accessor: Accessor, format: PartialFunction[Any, String]): Template =
     value => format.applyOrElse(accessor(value), (v: Any) => v.toString)
 
-  def apply(template: String, format: PartialFunction[Any, String] = PartialFunction.empty): Template = {
-    val matcher = Tag.matcher(template)
+  def apply(template: String, format: PartialFunction[Any, String] = PartialFunction.empty, tagPattern: Pattern = DefaultTagPattern): Template = {
+    val matcher = tagPattern.matcher(template)
     var position = 0
 
     def buildTemplate(innermostSection: Option[String]): Template = {

@@ -44,5 +44,11 @@ class TemplateTest extends AnyFunSpec {
       // TODO custom exception
       assertThrows[RuntimeException](Template("{{start foo}}{{start bar}}{{end foo}}{{end bar}}")(Map("foo" -> Seq(1), "bar" -> Seq(2))))
     }
+
+    it("allows the regular expression used for tags to be parameterised") {
+      val template = Template("This [->word<-] if you want", tagPattern = "\\[->([^<]+)<-]".r.pattern)
+
+      assert(template(Map("word" -> "works")) == "This works if you want")
+    }
   }
 }
