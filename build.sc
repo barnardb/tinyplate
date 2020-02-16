@@ -1,10 +1,7 @@
-import VersionDependent.{Constant, Split}
 import coursier.core.Version
 import mill._
 import mill.scalalib._
 import os.Path
-
-import scala.collection.generic.CanBuildFrom
 
 val scalaVersions = Seq(
   //  "2.10.7",
@@ -20,110 +17,120 @@ object lib extends Cross[LibModule](scalaVersions: _*) {
     os.copy(this(scalaVersions.last).mdocTargetDirectory() / "README.md", readme, replaceExisting = true)
     readme
   }
-
 }
 
 class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocModule {
   override def mdocVersion = "2.1.1"
 
-  override def scalacOptions = VersionDependent.resolve(Version(crossScalaVersion))(
-    Seq(
-      "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
-      "-encoding", "utf-8",                // Specify character encoding used by source files.
-      "-explaintypes",                     // Explain type errors in more detail.
-      "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
-      "-language:existentials",            // Existential types (besides wildcard types) can be written and inferred
-      "-language:experimental.macros",     // Allow macro definition (besides implementation and application)
-      "-language:higherKinds",             // Allow higher-kinded types
-      "-language:implicitConversions",     // Allow definition of implicit functions called views
-      "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
-      "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
-      "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
-      "-Xlint",
-      "-Ywarn-dead-code",                  // Warn when dead code is identified.
-      "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-      "-Ywarn-value-discard",               // Warn when non-Unit expression results are unused.
-    ),
-    VersionDependent.Split[Seq[String]](
-      oldValue = Seq(
-        "-Xfuture",                          // Turn on future language features.
-        "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-        "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
-        "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-        "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-      ),
-      fromVersion = "2.13",
-      newValue = Nil,
-    ),
-    CompilerOptions.`-Ywarn-unused`,
-    CompilerOptions.`-Ywarn-extra-implicit`,
-    CompilerOptions.`-Ypartial-unification`,
-    CompilerOptions.`-Ywarn-infer-any`,
-  ).flatten[String]
+  import ScalacOptions._
+  override def scalacOptions: T[Seq[String]] = forScalaVersion(crossScalaVersion)(
+    `-deprecation`,
+    `-encoding`("utf-8"),
+    `-explaintypes`,
+    `-feature`,
+    `-language:existentials`,
+    `-language:experimental.macros`,
+    `-language:higherKinds`,
+    `-language:implicitConversions`,
+    `-unchecked`,
+    `-Xcheckinit`,
+    `-Xfatal-warnings`,
+    `-Xlint`,
+    `-Yfuture`,
+    `-Yno-adapted-args`,
+    `-Ypartial-unification`,
+    `-Ywarn-dead-code`,
+    `-Ywarn-extra-implicit`,
+    `-Ywarn-inaccessible`,
+    `-Ywarn-infer-any`,
+    `-Ywarn-nullary-override`,
+    `-Ywarn-nullary-unit`,
+    `-Ywarn-numeric-widen`,
+    `-Ywarn-unused`,
+    `-Ywarn-value-discard`,
+  )
 }
 
-object CompilerOptions {
-  def apply(fromVersion: Version, value: String, untilVersion: Version): VersionDependent[Seq[String]] =
-    VersionDependent.range(Nil, fromVersion, Seq(value), untilVersion)
-  def apply(fromVersion: Version, value: String): VersionDependent[Seq[String]] =
-    Split(Constant(Nil), fromVersion, Constant(Seq(value)))
-  def apply(value: String, untilVersion: Version): VersionDependent[Seq[String]] =
-    Split(Constant(Seq(value)), untilVersion, Constant(Nil))
 
-  val `-Ywarn-unused` = apply(Version("2.11"), "-Ywarn-unused")
-  val `-Ywarn-extra-implicit` = apply(Version("2.12"), "-Ywarn-extra-implicit")
-  val `-Ypartial-unification` = apply(Version("2.11"), "-Ypartial-unification", Version("2.13")) // Enable partial unification in type constructor inference
-  val `-Ywarn-infer-any` = apply(Version("2.11"), "-Ywarn-infer-any", Version("2.13")) // Warn when a type argument is inferred to be `Any`.
-}
 
-System.err.println(scala.util.Properties.versionString)
+object ScalacOptions {
+  def forScalaVersion(version: String)(candidates: ScalacOption*): Seq[String] =
+    forScalaVersion(Version(version))(candidates: _*)
 
-//final class IterableVersionDependent[A <: Iterable[_]](private val value: VersionDependent[A]) { //TODO extends AnyVal
-////  def ++[B >: A <: Iterable[_]](rhs: VersionDependent[B]): VersionDependent[B] =
-////    new VersionDependent(v => value(v) ++ rhs(v))
-//}
+  def forScalaVersion(version: Version)(candidates: ScalacOption*): Seq[String] =
+    candidates.flatMap(_ (version))
 
-class VersionDependent[+A](select: Version => A) {
-  final def apply(scalaVersion: Version): A = select(scalaVersion)
-  final def apply(scalaVersion: String): A = apply(Version(scalaVersion))
-}
-
-object VersionDependent {
-  implicit def apply[A](value: A): VersionDependent[A] = Constant(value)
-  implicit def range[A](default: A, fromVersion: String, value: A, untilVersion: String): VersionDependent[A] =
-    range(default, Version(fromVersion), value, Version(untilVersion))
-  implicit def range[A](default: A, fromVersion: Version, value: A, untilVersion: Version): VersionDependent[A] =
-    Split(
-      Constant(default),
-      fromVersion,
-      Split(
-        Constant(value),
-        untilVersion,
-        Constant(default)
-      )
-    )
-  def transpose[A, M[X] <: TraversableOnce[X]](in: M[VersionDependent[A]])(implicit cbf: CanBuildFrom[M[VersionDependent[A]], A, M[A]]): VersionDependent[M[A]] =
-    new VersionDependent(resolve(_, in))
-
-  def resolve[A](version: Version)(in: VersionDependent[A]*)(implicit cbf: CanBuildFrom[Seq[VersionDependent[A]], A, Seq[A]]): Seq[A] =
-    resolve(version, in)
-
-  def resolve[A, M[X] <: TraversableOnce[X]](version: Version, in: M[VersionDependent[A]])(implicit cbf: CanBuildFrom[M[VersionDependent[A]], A, M[A]]): M[A] =
-    in.foldLeft(cbf(in))((as, vda) => as += vda(version)).result()
-
-  case class Constant[+A](value: A) extends VersionDependent[A](_ => value)
-
-  case class Split[+A](oldValue: VersionDependent[A], fromVersion: Version, newValue: VersionDependent[A]) extends
-    VersionDependent[A](v => (if (v < fromVersion) oldValue else newValue)(v))
-
-  object Split {
-    def apply[A](oldValue: VersionDependent[A], fromVersion: String, newValue: VersionDependent[A]): VersionDependent[A] =
-      Split(oldValue, Version(fromVersion), newValue)
+  private object PertinentScalaVersions {
+    val v2_11 = Version("2.11")
+    val v2_12 = Version("2.12")
+    val v2_13 = Version("2.13")
   }
+  import PertinentScalaVersions._
+
+  case object `-deprecation` extends ScalacOption("Emit warning and location for usages of deprecated APIs.")
+
+  case class `-encoding`(encoding: String) extends ScalacOption("Specify character encoding used by source files.", argument = Some(encoding))
+
+  case object `-explaintypes` extends ScalacOption("Explain type errors in more detail.")
+
+  case object `-feature` extends ScalacOption("Emit warning and location for usages of features that should be imported explicitly.")
+
+  case object `-language:existentials` extends ScalacOption("Existential types (besides wildcard types) can be written and inferred")
+
+  case object `-language:experimental.macros` extends ScalacOption("Allow macro definition (besides implementation and application)")
+
+  case object `-language:higherKinds` extends ScalacOption("Allow higher-kinded types")
+
+  case object `-language:implicitConversions` extends ScalacOption("Allow definition of implicit functions called views")
+
+  case object `-unchecked` extends ScalacOption("Enable additional warnings where generated code depends on assumptions.")
+
+  case object `-Xcheckinit` extends ScalacOption("Wrap field accessors to throw an exception on uninitialized access.")
+
+  case object `-Xfatal-warnings` extends ScalacOption("Fail the compilation if there are any warnings.")
+
+  case object `-Xlint` extends ScalacOption(???)
+
+  case object `-Yfuture` extends ScalacOption("Turn on future language features.", until = v2_13)
+
+  case object `-Yno-adapted-args` extends ScalacOption("Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.", until = v2_13)
+
+  case object `-Ypartial-unification` extends ScalacOption("Enable partial unification in type constructor inference", v2_11, v2_13)
+
+  case object `-Ywarn-dead-code` extends ScalacOption("Warn when dead code is identified.")
+
+  case object `-Ywarn-extra-implicit` extends ScalacOption(???, v2_12)
+
+  case object `-Ywarn-inaccessible` extends ScalacOption("Warn about inaccessible types in method signatures.", until = v2_13)
+
+  case object `-Ywarn-infer-any` extends ScalacOption("Warn when a type argument is inferred to be `Any`.", v2_11, v2_13)
+
+  case object `-Ywarn-nullary-override` extends ScalacOption("Warn when non-nullary `def f()' overrides nullary `def f'.", until = v2_13)
+
+  case object `-Ywarn-nullary-unit` extends ScalacOption("Warn when nullary methods return Unit.", until = v2_13)
+
+  case object `-Ywarn-numeric-widen` extends ScalacOption("Warn when numerics are widened.")
+
+  case object `-Ywarn-unused` extends ScalacOption(???, from = v2_11)
+
+  case object `-Ywarn-value-discard` extends ScalacOption("Warn when non-Unit expression results are unused.")
 }
+
+abstract class ScalacOption(description: => String, from: Version = null, until: Version = null, argument: Option[String] = None) {
+  val asRawArguments: Seq[String] = getClass.getSimpleName.stripSuffix("$") :: argument.toList
+  val fromVersion: Option[Version] = Option(from)
+  val untilVersion: Option[Version] = Option(until)
+
+  def apply(scalaVersion: Version): Seq[String] =
+    if (fromVersion.forall(_ <= scalaVersion) && untilVersion.forall(scalaVersion < _)) asRawArguments
+    else Nil
+}
+
+
 
 // Based on https://github.com/lihaoyi/mill/blob/master/contrib/tut/src/TutModule.scala
 // TODO upstream PR
+
 import coursier.MavenRepository
 import mill.scalalib._
 
