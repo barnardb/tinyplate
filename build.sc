@@ -257,7 +257,6 @@ trait MdocModule extends ScalaModule {
 //      "--include", re.pattern.toString,
       "--scalac-options", opts.mkString(" ")
     ) ++ pOpts
-    println(mdocArgs)
     os.proc(
       'java,
       "-cp", mdocClasspath().map(_.path.toIO.getAbsolutePath).mkString(java.io.File.pathSeparator),
