@@ -8,7 +8,7 @@ object Accessor {
     case o => o.getClass.getDeclaredMethod(name).invoke(o)
   }
 
-  def parse(chain: String): Accessor =
+  def chain(chain: String): Accessor =
     wrapExceptions(chain, chain.split('.').map(apply).reduce(_ andThen _))
 
   def wrapExceptions(repr: String, raw: Accessor): Accessor =

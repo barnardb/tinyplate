@@ -26,14 +26,14 @@ object Template {
             case "start" =>
               position = matcher.end()
               val innerTemplate = buildTemplate(Some(value))
-              chunks += dynamic(Accessor.parse(value), {
+              chunks += dynamic(Accessor.chain(value), {
                 case i: Iterable[_] => i.iterator.map(innerTemplate(_)).mkString
               })
             case "end" =>
               if (innermostSection.contains(value)) return v => chunks.result().map(_(v)).mkString
               else throw new IllegalArgumentException(s"""Expected to encounter ${innermostSection.fold("the end of the template")(s => s"{{end $s}}")}, but encountered ${matcher.group()}""")
           }
-          case accessor => chunks += dynamic(Accessor.parse(accessor), format)
+          case accessor => chunks += dynamic(Accessor.chain(accessor), format)
         }
         position = matcher.end()
       }
