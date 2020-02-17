@@ -1,7 +1,10 @@
 import coursier.core.Version
 import mill._
 import mill.scalalib._
+import mill.scalalib.publish._
 import os.Path
+
+import scala.reflect.runtime.universe
 
 val scalaVersions = Seq(
   //  "2.10.7",
@@ -19,8 +22,8 @@ object lib extends Cross[LibModule](scalaVersions: _*) {
   }
 }
 
-class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocModule {
-  override def mdocVersion = "2.1.1"
+class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocModule with PublishModule {
+  override def artifactName = "tinyplate"
 
   import ScalacOptions._
   override def scalacOptions: T[Seq[String]] = forScalaVersion(crossScalaVersion)(
@@ -56,6 +59,21 @@ class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocM
     )
     override def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
+
+  override def mdocVersion = "2.1.1"
+
+  override def pomSettings = PomSettings(
+    description = "A tiny Scala template engine",
+    organization = "io.github.barnardb",
+    url = "https://github.com/barnardb/tinyplate",
+    licenses = Seq(License.MIT),
+    versionControl = VersionControl.github("barnardb", "tinyplate"),
+    developers = Seq(
+      Developer("barnardb", "Ben Barnard", "https://github.com/barnardb")
+    )
+  )
+
+  override def publishVersion = "0.1.0"
 }
 
 
