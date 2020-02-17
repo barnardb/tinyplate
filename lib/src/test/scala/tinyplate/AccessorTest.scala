@@ -1,10 +1,12 @@
 package tinyplate
 
+import java.util
+
 import org.scalatest.diagrams.Diagrams
 import org.scalatest.funspec.AnyFunSpec
-import scala.collection.JavaConverters._
 
 class AccessorTest extends AnyFunSpec with Diagrams {
+
   import JavaTestClasses._
 
   describe("""An accessor for "foo"""") {
@@ -45,7 +47,12 @@ class AccessorTest extends AnyFunSpec with Diagrams {
     }
 
     ignore("""should extract a value from a java.util.Map—NEEDS IMPLEMENTATION""") {
-      assert(foo(Map("faa" -> 4, "foo" -> 7, "fuu" -> 11).asJava) == 7)
+      val javaMap = new util.HashMap[String, Int]
+      javaMap.put("faa", 4)
+      javaMap.put("foo", 7)
+      javaMap.put("fuu", 11)
+
+      assert(foo(javaMap) == 7)
     }
 
     ignore("""should extract a value from a Java bean—NEEDS IMPLEMENTATION""") {
@@ -61,7 +68,7 @@ class AccessorTest extends AnyFunSpec with Diagrams {
     }
 
     ignore("""should prefer X over Y and Z—What's the right behaviour?""") {
-      assert(foo(new JavaDisambiguation) == ???)
+      assert(foo(new JavaDisambiguation) == "???")
     }
 
     it("Should not extract a value from a private field") {
@@ -86,7 +93,7 @@ class AccessorTest extends AnyFunSpec with Diagrams {
   }
 
   describe("Accessor chaining") {
-    val model = Map(
+    val model = Map[String, Any](
       "foo" -> Map("bar" -> "baz"),
       "bar" -> "drinks",
       "foo.bar" -> "really?"
