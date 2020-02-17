@@ -35,8 +35,8 @@ class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocM
     `-unchecked`,
     `-Xcheckinit`,
     `-Xfatal-warnings`,
+    `-Xfuture`,
     `-Xlint`,
-    `-Yfuture`,
     `-Yno-adapted-args`,
     `-Ypartial-unification`,
     `-Ywarn-dead-code`,
@@ -96,9 +96,9 @@ object ScalacOptions {
 
   case object `-Xfatal-warnings` extends ScalacOption("Fail the compilation if there are any warnings.")
 
-  case object `-Xlint` extends ScalacOption(???)
+  case object `-Xfuture` extends ScalacOption("Turn on future language features.", until = v2_13)
 
-  case object `-Yfuture` extends ScalacOption("Turn on future language features.", until = v2_13)
+  case object `-Xlint` extends ScalacOption(???)
 
   case object `-Yno-adapted-args` extends ScalacOption("Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.", until = v2_13)
 
@@ -124,7 +124,10 @@ object ScalacOptions {
 }
 
 abstract class ScalacOption(description: => String, from: Version = null, until: Version = null, argument: Option[String] = None) {
-  val asRawArguments: Seq[String] = getClass.getSimpleName.stripSuffix("$") :: argument.toList
+  val asRawArguments: Seq[String] =
+    universe.runtimeMirror(getClass.getClassLoader)
+      .classSymbol(getClass)
+      .name.decodedName.toString :: argument.toList
   val fromVersion: Option[Version] = Option(from)
   val untilVersion: Option[Version] = Option(until)
 
