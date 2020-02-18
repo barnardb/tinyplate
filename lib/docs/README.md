@@ -106,7 +106,9 @@ You render it:
 val rendered = template(model)
 ```
 
-Oh, you forgot to use the timestamp. Well, let's have another go at the first line of the release announcement:
+Wow, that was easy!
+
+Oh, you forgot to use the timestamp though. Well, let's have another go at the first line of the release announcement:
 
 ```scala mdoc
 tinyplate.Template("<h1>{{metadata.timestamp}} {{metadata.title}}</h1>")(model)
@@ -122,7 +124,7 @@ tinyplate.Template("<h1>{{metadata.timestamp}} {{metadata.title}}</h1>", {
 
 Ah, much better!
 
-Oh, but what if you make a mistake?
+But wait, what if you make a mistake in the template?
 
 ```scala mdoc:crash
 tinyplate.Template("This is version {{meta.versoin}}.")(Map(
