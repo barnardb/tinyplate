@@ -1,4 +1,5 @@
 [![License](https://img.shields.io/github/license/barnardb/tinyplate)](https://github.com/barnardb/tinyplate/blob/master/LICENSE)
+[![Continuous Integration](https://github.com/barnardb/tinyplate/workflows/CI/badge.svg)](https://github.com/barnardb/tinyplate/actions?query=workflow%3ACI)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.barnardb/tinyplate_2.13)](https://search.maven.org/search?q=g:io.github.barnardb%20a:tinyplate_*)
 
 
