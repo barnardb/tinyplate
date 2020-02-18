@@ -1,7 +1,16 @@
+[![License](https://img.shields.io/github/license/barnardb/tinyplate)](https://github.com/barnardb/tinyplate/blob/master/LICENSE)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.barnardb/tinyplate_2.13)](https://search.maven.org/search?q=g:io.github.barnardb%20a:tinyplate_*)
+
+
 Tinyplate
 =========
 
 A tiny Scala template engine.
+
+- [TL;DR](#tldr)
+- [Story](#story)
+- [Security](#security)
+
 
 TL;DR
 -----
@@ -27,6 +36,7 @@ case object Dog extends Type
 
 val anotherResult = template(Foo("yep", Animal("Snuggles", Cat)))
 ```
+
 
 Story
 -----
@@ -122,3 +132,9 @@ tinyplate.Template("This is version {{meta.versoin}}.")(Map(
 ```
 
 Phew, safe!
+
+
+Security
+--------
+
+Note that Tinyplate templates can invoke any method with no arguments accessible from your model object. Tinyplate should only be used with trusted templates that you write yourself. It should not be used with user-editable templates.
