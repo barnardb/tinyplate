@@ -14,8 +14,9 @@ class TemplateTest extends AnyFunSpec {
     }
 
     it("fails if an accessor can't be resolved") {
-      // TODO custom exception
-      assertThrows[RuntimeException](Template("{{whoops}}")(Map("foo" -> Map("bar" -> "baz"))))
+      val template = Template("{{whoops}}")
+
+      assertThrows[TemplateException](template(Map("foo" -> Map("bar" -> "baz"))))
     }
 
     it("allows literals and accessors to be interspersed") {
@@ -45,23 +46,27 @@ class TemplateTest extends AnyFunSpec {
     }
 
     it("fails if a template has a `start` without a matching `end`") {
-      // TODO custom exception
-      assertThrows[RuntimeException](Template("{{start foo}}")(Map("foo" -> Seq(1))))
+      assertThrows[TemplateException](Template("{{start foo}}"))
     }
 
     it("fails if a template has an `end` without a matching `start`") {
-      // TODO custom exception
-      assertThrows[RuntimeException](Template("{{start foo}}")(Map("foo" -> Seq(1))))
+      assertThrows[TemplateException](Template("{{end foo}}"))
     }
 
     it("fails if a template's `start` and `end` blocks don't nest properly") {
-      // TODO custom exception
-      assertThrows[RuntimeException](Template("{{start foo}}{{start bar}}{{end foo}}{{end bar}}")(Map("foo" -> Seq(1), "bar" -> Seq(2))))
+      assertThrows[TemplateException](Template("{{start foo}}{{start bar}}{{end foo}}{{end bar}}"))
+    }
+
+    it("fails if the value for a `start`/`end` block is null") {
+      val template = Template("{{start foo}}{{end foo}}")
+
+      assertThrows[TemplateException](template(Map("foo" -> null)))
     }
 
     it("fails if it doesn't know how to handle the value for a `start`/`end` block") {
-      // TODO custom exception
-      assertThrows[RuntimeException](Template("{{start foo}}{{end foo}}")(Map("foo" -> "whoops")))
+      val template = Template("{{start foo}}{{end foo}}")
+
+      assertThrows[TemplateException](template(Map("foo" -> "whoops")))
     }
 
     it("allows the regular expression used for tags to be parameterised") {
