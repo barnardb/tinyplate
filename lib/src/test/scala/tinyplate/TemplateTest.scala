@@ -30,6 +30,20 @@ class TemplateTest extends AnyFunSpec {
       assert(Template("Repeated{{start words}} _{{toString}}_{{end words}}")(Map("words" -> java.util.Arrays.asList("cat", "bat", "schmoigen"))) == "Repeated _cat_ _bat_ _schmoigen_")
     }
 
+    it("changes the context object when starting an `Option` section") {
+      val template = Template("{{a}}{{start b}} and {{a}}{{end b}}")
+
+      assert(template(Map("a" -> "Something", "b" -> None)) == "Something")
+      assert(template(Map("a" -> "Something", "b" -> Some(Map("a" -> "another thing")))) == "Something and another thing")
+    }
+
+    it("keeps the same context object when starting a `Boolean` section") {
+      val template = Template("{{start p}}{{v}}{{end p}}")
+
+      assert(template(Map("p" -> false, "v" -> "value from outer context")) == "")
+      assert(template(Map("p" -> true, "v" -> "value from outer context")) == "value from outer context")
+    }
+
     it("fails if a template has a `start` without a matching `end`") {
       // TODO custom exception
       assertThrows[RuntimeException](Template("{{start foo}}")(Map("foo" -> Seq(1))))
@@ -43,6 +57,11 @@ class TemplateTest extends AnyFunSpec {
     it("fails if a template's `start` and `end` blocks don't nest properly") {
       // TODO custom exception
       assertThrows[RuntimeException](Template("{{start foo}}{{start bar}}{{end foo}}{{end bar}}")(Map("foo" -> Seq(1), "bar" -> Seq(2))))
+    }
+
+    it("fails if it doesn't know how to handle the value for a `start`/`end` block") {
+      // TODO custom exception
+      assertThrows[RuntimeException](Template("{{start foo}}{{end foo}}")(Map("foo" -> "whoops")))
     }
 
     it("allows the regular expression used for tags to be parameterised") {

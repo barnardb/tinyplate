@@ -73,7 +73,7 @@ class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocM
     )
   )
 
-  override def publishVersion = "0.1.0"
+  override def publishVersion = "0.2.0"
 }
 
 

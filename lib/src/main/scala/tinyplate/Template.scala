@@ -22,15 +22,18 @@ object Template {
       while (matcher.find()) {
         chunks += literal(template.substring(position, matcher.start()))
         matcher.group(1) match {
-          case KeywordValue(keyword, value) => keyword match {
+          case KeywordValue(keyword, expression) => keyword match {
             case "start" =>
               position = matcher.end()
-              val innerTemplate = buildTemplate(Some(value))
-              chunks += dynamic(Accessor.chain(value), {
+              val accessor = Accessor.chain(expression)
+              val innerTemplate = buildTemplate(Some(expression))
+              chunks += (context => accessor(context) match {
                 case i: Iterable[_] => i.iterator.map(innerTemplate(_)).mkString
+                case o: Option[_] => o.map(innerTemplate(_)).getOrElse("")
+                case p: Boolean => if (p) innerTemplate(context) else ""
               })
             case "end" =>
-              if (innermostSection.contains(value)) return v => chunks.result().map(_(v)).mkString
+              if (innermostSection.contains(expression)) return v => chunks.result().map(_(v)).mkString
               else throw new IllegalArgumentException(s"""Expected to encounter ${innermostSection.fold("the end of the template")(s => s"{{end $s}}")}, but encountered ${matcher.group()}""")
           }
           case accessor => chunks += dynamic(Accessor.chain(accessor), format)
