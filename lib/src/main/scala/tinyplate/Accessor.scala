@@ -7,5 +7,8 @@ object Accessor {
   }
 
   def chain(chain: String): Accessor =
-    chain.split('.').map(apply).reduce(_ andThen _)
+    chain match {
+      case "." => identity
+      case _ => chain.split('.').map(apply).reduce(_ andThen _)
+    }
 }

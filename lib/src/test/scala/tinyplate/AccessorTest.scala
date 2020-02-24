@@ -110,6 +110,10 @@ class AccessorTest extends AnyFunSpec with Diagrams {
     it("""should allow the dot operator to chain accessors""") {
       assert(Accessor.chain("foo.bar")(model) == "baz")
     }
+
+    it("""should return an identity accessor when given a single dot""") {
+      assert(Accessor.chain(".")(model) == model)
+    }
   }
 
 }

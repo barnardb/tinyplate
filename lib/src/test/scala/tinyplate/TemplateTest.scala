@@ -74,5 +74,11 @@ class TemplateTest extends AnyFunSpec {
 
       assert(template(Map("word" -> "works")) == "This works if you want")
     }
+
+    it("allows . to be used to refer to the current context item") {
+      assert(Template("{{.}}")("outer") == "outer")
+      assert(Template("{{start a}}{{.}}{{end a}}")(Map("a" -> Seq("inner"))) == "inner")
+      assert(Template("{{start .}}{{.}}{{end .}}")(Seq("a", "b")) == "ab")
+    }
   }
 }
