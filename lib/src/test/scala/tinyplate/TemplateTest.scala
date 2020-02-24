@@ -23,8 +23,16 @@ class TemplateTest extends AnyFunSpec {
       assert(Template("Look {{foo}} at {{bar}}{{baz}} this")(Map("foo" -> 1, "bar" -> 3, "baz" -> 4)) == "Look 1 at 34 this")
     }
 
+    it("allows . to be used to refer to the context item") {
+      assert(Template("{{.}}")("context") == "context")
+    }
+
     it("allows sections to be repeated") {
-      assert(Template("Repeated{{start words}} _{{toString}}_{{end words}}")(Map("words" -> Seq("cat", "bat", "schmoigen"))) == "Repeated _cat_ _bat_ _schmoigen_")
+      assert(Template("Repeated{{start words}} _{{.}}_{{end words}}")(Map("words" -> Seq("cat", "bat", "schmoigen"))) == "Repeated _cat_ _bat_ _schmoigen_")
+    }
+
+    it("allows sections to be repeated using the context item") {
+      assert(Template("Repeated{{start .}} _{{.}}_{{end .}}")(Seq("cat", "bat", "schmoigen")) == "Repeated _cat_ _bat_ _schmoigen_")
     }
 
     ignore("allows sections to be repeated with Java collections") {
@@ -73,12 +81,6 @@ class TemplateTest extends AnyFunSpec {
       val template = Template("This [->word<-] if you want", tagPattern = "\\[->([^<]+)<-]".r.pattern)
 
       assert(template(Map("word" -> "works")) == "This works if you want")
-    }
-
-    it("allows . to be used to refer to the current context item") {
-      assert(Template("{{.}}")("outer") == "outer")
-      assert(Template("{{start a}}{{.}}{{end a}}")(Map("a" -> Seq("inner"))) == "inner")
-      assert(Template("{{start .}}{{.}}{{end .}}")(Seq("a", "b")) == "ab")
     }
   }
 }
