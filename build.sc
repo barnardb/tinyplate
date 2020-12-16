@@ -9,8 +9,8 @@ import scala.reflect.runtime.universe
 val scalaVersions = Seq(
   //  "2.10.7",
   "2.11.12",
-  "2.12.10",
-  "2.13.1",
+  "2.12.12",
+  "2.13.4",
 )
 
 object lib extends Cross[LibModule](scalaVersions: _*) {
