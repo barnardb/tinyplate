@@ -57,6 +57,7 @@ Let's say it looks like this:
 ```html
 <h1>{{metadata.title}}</h1>
 <p>We're releasing version {{version}}.</p>
+{{if changes}}
 <p>It comes with the following changes:
   <ul>
   {{start changes}}
@@ -64,6 +65,7 @@ Let's say it looks like this:
   {{end changes}}
   </ul>
 </p>
+{{fi changes}}
 ```
 
 How will you render this? Maybe you've done a quick search and found bloated libraries like [scalate](https://github.com/scalate/scalate) that you couldn't quickly get working out of the box. Or you tried some classics like [StringTemplate](https://www.stringtemplate.org/) or [mustache.java](https://github.com/spullara/mustache.java), but their behaviour of silently ignoring typos in tags like `{{versoin}}` (that aren't in your model) makes you cringe. You want something simple. You want it to fail when you've messed up, rather than silently move on.

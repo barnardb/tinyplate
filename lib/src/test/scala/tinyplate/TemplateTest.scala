@@ -82,5 +82,29 @@ class TemplateTest extends AnyFunSpec {
 
       assert(template(Map("word" -> "works")) == "This works if you want")
     }
+
+    it("allows sections to be conditionally rendered without changing the context") {
+      val template = Template("{{if value}}yes{{fi value}}")
+
+//      assert(template(Map()) == "")
+      assert(template(Map("value" -> null)) == "")
+      assert(template(Map("value" -> false)) == "")
+      assert(template(Map("value" -> true)) == "yes")
+      assert(template(Map("value" -> None)) == "")
+      assert(template(Map("value" -> Some(false))) == "yes")
+      assert(template(Map("value" -> Nil)) == "")
+      assert(template(Map("value" -> Seq(false))) == "yes")
+    }
+
+    it("allows nested conditional checking") {
+      val template = Template("{{if value inner}}yes{{fi value inner}}")
+
+//      assert(template(Map()) == "")
+      assert(template(Map("value" -> null)) == "")
+      assert(template(Map("value" -> Nil)) == "")
+      assert(template(Map("value" -> Seq(Map("inner" -> false)))) == "")
+      assert(template(Map("value" -> Seq(Map("inner" -> true)))) == "yes")
+      assert(template(Map("value" -> Seq(Map("inner" -> false), Map("inner" -> true)))) == "yes")
+    }
   }
 }

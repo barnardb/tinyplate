@@ -23,7 +23,7 @@ object lib extends Cross[LibModule](scalaVersions: _*) {
 }
 
 class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocModule with PublishModule {
-  override def artifactName = "tinyplate"
+  override def artifactName: T[String] = "tinyplate"
 
   import ScalacOptions._
   override def scalacOptions: T[Seq[String]] = forScalaVersion(crossScalaVersion)(

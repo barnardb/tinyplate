@@ -22,7 +22,7 @@ object Template {
     val matcher = tagPattern.matcher(template)
     var position = 0
 
-    def buildTemplate(innermostSection: Option[String]): Template = {
+    def buildTemplate(innermostSection: Option[(String, String)]): Template = {
       val chunks = Seq.newBuilder[Template]
       while (matcher.find()) {
         val tag = matcher.group()
@@ -32,7 +32,7 @@ object Template {
             case "start" =>
               position = matcher.end()
               val accessor = Accessor.chain(expression)
-              val innerTemplate = buildTemplate(Some(expression))
+              val innerTemplate = buildTemplate(Some("end" -> expression))
               chunks += (context => accessor(context) match {
                 case i: Iterable[_] => i.iterator.map(innerTemplate(_)).mkString
                 case o: Option[_] => o.map(innerTemplate(_)).getOrElse("")
@@ -40,9 +40,21 @@ object Template {
                 case null => throw new TemplateException(tag, "start expression evaluated to null")
                 case v => throw new TemplateException(tag, s"start expression evaluated to value of class ${v.getClass}: $v")
               })
-            case "end" =>
-              if (innermostSection.contains(expression)) return v => chunks.result().map(_(v)).mkString
-              else throw new TemplateException(tag, s"unexpected end tag: ${innermostSection.fold("currently at the top level of the template")(startExpression => s"innermost start tag expression is $startExpression")}")
+            case "if" =>
+              position = matcher.end()
+              val accessors = expression.split(" ").toSeq.map(Accessor.chain)
+              val innerTemplate = buildTemplate(Some("fi" -> expression))
+              def isTruthy(value: Any, accessors: Seq[Accessor]): Boolean = accessors.head(value) match {
+                case i: Iterable[_] => i.exists(accessors.size == 1 || isTruthy(_, accessors.tail))
+                case o: Option[_] => o.exists(accessors.size == 1 || isTruthy(_, accessors.tail))
+                case p: Boolean => if (p && accessors.size > 1) throw new TemplateException(tag, "Encountered boolean where collection or option expected") else p
+                case null => false
+                case v => throw new TemplateException(tag, s"if expression evaluated to value of class ${v.getClass}: $v")
+              }
+              chunks += (context => if (isTruthy(context, accessors)) innerTemplate(context) else "")
+            case _ =>
+              if (innermostSection.contains(keyword -> expression)) return v => chunks.result().map(_(v)).mkString
+              else throw new TemplateException(tag, s"unexpected tag: ${innermostSection.fold("currently at the top level of the template") { case (endTag, expression) => s"expecting closing {{$endTag $expression}} or nested start or if" }}")
           }
           case expression => chunks += dynamic(tag, Accessor.chain(expression), format)
         }
