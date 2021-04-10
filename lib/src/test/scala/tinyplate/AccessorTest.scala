@@ -2,10 +2,13 @@ package tinyplate
 
 import java.util
 
-import org.scalatest.diagrams.Diagrams
+//import org.scalatest.diagrams.Diagrams
 import org.scalatest.funspec.AnyFunSpec
 
-class AccessorTest extends AnyFunSpec with Diagrams {
+class AccessorTest
+  extends AnyFunSpec
+  // Not compiling for me in mill right now with Scala 3.0.0-M2: with Diagrams
+{
 
   import JavaTestClasses._
 

@@ -9,8 +9,9 @@ import scala.reflect.runtime.universe
 val scalaVersions = Seq(
   //  "2.10.7",
   "2.11.12",
-  "2.12.12",
-  "2.13.4",
+  "2.12.13",
+  "2.13.5",
+  "3.0.0-RC2",
 )
 
 object lib extends Cross[LibModule](scalaVersions: _*) {
@@ -29,19 +30,20 @@ class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocM
   override def scalacOptions: T[Seq[String]] = forScalaVersion(crossScalaVersion)(
     `-deprecation`,
     `-encoding`("utf-8"),
-    `-explaintypes`,
+    `-explain-types`, `-explaintypes`,
     `-feature`,
     `-language:existentials`,
     `-language:experimental.macros`,
     `-language:higherKinds`,
     `-language:implicitConversions`,
     `-unchecked`,
-    `-Xcheckinit`,
     `-Xfatal-warnings`,
     `-Xfuture`,
     `-Xlint`,
+    `-Ycheck-all-patmat`,
     `-Yno-adapted-args`,
     `-Ypartial-unification`,
+    `-Ysafe-init`, `-Xcheckinit`,
     `-Ywarn-dead-code`,
     `-Ywarn-extra-implicit`,
     `-Ywarn-inaccessible`,
@@ -55,12 +57,12 @@ class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocM
 
   object test extends Tests {
     override def ivyDeps = Agg(
-      ivy"org.scalatest::scalatest::3.1.0"
+      ivy"org.scalatest::scalatest::3.2.7"
     )
     override def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
 
-  override def mdocVersion = "2.1.1"
+  override def mdocVersion = "2.2.0"
 
   override def pomSettings = PomSettings(
     description = "A tiny Scala template engine",
@@ -73,7 +75,7 @@ class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocM
     )
   )
 
-  override def publishVersion = "0.5.0"
+  override def publishVersion = "0.6.0"
 }
 
 
@@ -89,6 +91,7 @@ object ScalacOptions {
     val v2_11 = Version("2.11")
     val v2_12 = Version("2.12")
     val v2_13 = Version("2.13")
+    val v3 = Version("3.0.0-RC2")
   }
   import PertinentScalaVersions._
 
@@ -96,7 +99,8 @@ object ScalacOptions {
 
   case class `-encoding`(encoding: String) extends ScalacOption("Specify character encoding used by source files.", argument = Some(encoding))
 
-  case object `-explaintypes` extends ScalacOption("Explain type errors in more detail.")
+  case object `-explain-types` extends ScalacOption("Explain type errors in more detail.", v3)
+  case object `-explaintypes` extends ScalacOption("Explain type errors in more detail.", until = v3)
 
   case object `-feature` extends ScalacOption("Emit warning and location for usages of features that should be imported explicitly.")
 
@@ -110,21 +114,24 @@ object ScalacOptions {
 
   case object `-unchecked` extends ScalacOption("Enable additional warnings where generated code depends on assumptions.")
 
-  case object `-Xcheckinit` extends ScalacOption("Wrap field accessors to throw an exception on uninitialized access.")
-
   case object `-Xfatal-warnings` extends ScalacOption("Fail the compilation if there are any warnings.")
 
   case object `-Xfuture` extends ScalacOption("Turn on future language features.", until = v2_13)
 
-  case object `-Xlint` extends ScalacOption(???)
+  case object `-Xlint` extends ScalacOption(???, until = v3) // TODO what's the Scala 3 equivalent?
+
+  case object `-Ycheck-all-patmat` extends ScalacOption("Check exhaustivity and redundancy of all pattern matching (used for testing the algorithm).", v3)
 
   case object `-Yno-adapted-args` extends ScalacOption("Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.", until = v2_13)
 
+  case object `-Ysafe-init` extends ScalacOption("Experimental support for Safe Initialization: https://dotty.epfl.ch/docs/reference/other-new-features/safe-initialization.html", v3)
+  case object `-Xcheckinit` extends ScalacOption("Wrap field accessors to throw an exception on uninitialized access.", until = v3)
+
   case object `-Ypartial-unification` extends ScalacOption("Enable partial unification in type constructor inference", v2_11, v2_13)
 
-  case object `-Ywarn-dead-code` extends ScalacOption("Warn when dead code is identified.")
+  case object `-Ywarn-dead-code` extends ScalacOption("Warn when dead code is identified.", until = v3)
 
-  case object `-Ywarn-extra-implicit` extends ScalacOption(???, v2_12)
+  case object `-Ywarn-extra-implicit` extends ScalacOption(???, v2_12, v3)
 
   case object `-Ywarn-inaccessible` extends ScalacOption("Warn about inaccessible types in method signatures.", until = v2_13)
 
@@ -134,11 +141,11 @@ object ScalacOptions {
 
   case object `-Ywarn-nullary-unit` extends ScalacOption("Warn when nullary methods return Unit.", until = v2_13)
 
-  case object `-Ywarn-numeric-widen` extends ScalacOption("Warn when numerics are widened.")
+  case object `-Ywarn-numeric-widen` extends ScalacOption("Warn when numerics are widened.", until = v3)
 
-  case object `-Ywarn-unused` extends ScalacOption(???, from = v2_11)
+  case object `-Ywarn-unused` extends ScalacOption(???, v2_11, v3)
 
-  case object `-Ywarn-value-discard` extends ScalacOption("Warn when non-Unit expression results are unused.")
+  case object `-Ywarn-value-discard` extends ScalacOption("Warn when non-Unit expression results are unused.", until = v3)
 }
 
 abstract class ScalacOption(description: => String, from: Version = null, until: Version = null, argument: Option[String] = None) {
