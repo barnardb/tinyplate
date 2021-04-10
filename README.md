@@ -20,7 +20,7 @@ TL;DR
 import tinyplate.Template
 
 val template: Template = Template("This is a {{subject.name}} {{subject.type}}")
-// template: Any => String = tinyplate.Template$$$Lambda$1317/0x000000080184b840@40c28b0d
+// template: Any => String = tinyplate.Template$$$Lambda$1296/26030311@64dfb31d
 
 val result = template(Map(
   "object" -> "success",
@@ -129,6 +129,7 @@ You render it:
 val rendered = template(model)
 // rendered: String = """<h1>Feature-Complete!</h1>
 // <p>We're releasing version 42.</p>
+// 
 // <p>It comes with the following changes:
 //   <ul>
 //   
@@ -140,6 +141,7 @@ val rendered = template(model)
 //   
 //   </ul>
 // </p>
+// 
 // """
 ```
 
@@ -171,20 +173,21 @@ tinyplate.Template("This is version {{meta.versoin}}.")(Map(
     "version" -> 7
   )
 ))
-// java.lang.RuntimeException: Error using accessor: meta.versoin
-// 	at tinyplate.Accessor$.$anonfun$wrapExceptions$1(Accessor.scala:15)
-// 	at tinyplate.Template$.$anonfun$dynamic$1(Template.scala:14)
-// 	at tinyplate.Template$.$anonfun$apply$7(Template.scala:42)
-// 	at scala.collection.immutable.List.map(List.scala:223)
+// tinyplate.TemplateException: Error at tag {{meta.versoin}}: error invoking accessor
+// 	at tinyplate.Template$.liftedTree1$1(Template.scala:17)
+// 	at tinyplate.Template$.$anonfun$dynamic$1(Template.scala:16)
+// 	at tinyplate.Template$.$anonfun$apply$15(Template.scala:65)
+// 	at scala.collection.immutable.List.map(List.scala:250)
 // 	at scala.collection.immutable.List.map(List.scala:79)
-// 	at tinyplate.Template$.$anonfun$apply$6(Template.scala:42)
+// 	at tinyplate.Template$.$anonfun$apply$14(Template.scala:65)
 // 	at repl.Session$App0$$anonfun$16.apply(README.md:133)
 // 	at repl.Session$App0$$anonfun$16.apply(README.md:131)
 // Caused by: java.util.NoSuchElementException: key not found: versoin
-// 	at scala.collection.immutable.Map$Map1.apply(Map.scala:240)
-// 	at tinyplate.Accessor$.$anonfun$apply$1(Accessor.scala:7)
+// 	at scala.collection.immutable.Map$Map1.apply(Map.scala:239)
+// 	at tinyplate.Accessor$.$anonfun$apply$1(Accessor.scala:5)
 // 	at scala.Function1.$anonfun$andThen$1(Function1.scala:85)
-// 	... 8 more
+// 	at tinyplate.Template$.liftedTree1$1(Template.scala:16)
+// 	... 7 more
 ```
 
 Phew, safe!
