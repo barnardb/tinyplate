@@ -14,11 +14,13 @@ val scalaVersions = Seq(
   "3.0.0-RC2",
 )
 
+val readmeScalaVersion = scalaVersions.filterNot(_.contains("-")).last
+
 object lib extends Cross[LibModule](scalaVersions: _*) {
   def updateReadme: T[Path] = T {
-    this(scalaVersions.last).mdoc()
+    this(readmeScalaVersion).mdoc()
     val readme = os.pwd / "README.md"
-    os.copy(this(scalaVersions.last).mdocTargetDirectory() / "README.md", readme, replaceExisting = true)
+    os.copy(this(readmeScalaVersion).mdocTargetDirectory() / "README.md", readme, replaceExisting = true)
     readme
   }
 }
