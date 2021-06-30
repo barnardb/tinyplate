@@ -64,7 +64,7 @@ class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocM
     override def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
 
-  override def mdocVersion = "2.2.0"
+  override def mdocVersion = "2.2.21"
 
   override def pomSettings = PomSettings(
     description = "A tiny Scala template engine",
@@ -209,6 +209,12 @@ import scala.util.matching.Regex
  * }}}
  */
 trait MdocModule extends ScalaModule {
+
+  /**
+   * The version of Mdoc to use.
+   */
+  def mdocVersion: T[String]
+
   /**
    * This task determines where documentation files must be placed in order to be compiled with Mdoc. By default this is the `mdoc` folder at the root of the module.
    */
@@ -221,17 +227,14 @@ trait MdocModule extends ScalaModule {
   def mdocTargetDirectory: T[os.Path] = T { T.dest }
 
   /**
-   * A task which determines what classpath is used when compiling documentation. By default this is configured to use the same inputs as the [[mill.contrib.mdoc.MdocModule#runClasspath]],
-   * except for using [[mill.contrib.mdoc.MdocModule#mdocIvyDeps]] rather than the module's [[mill.contrib.mdoc.MdocModule#runIvyDeps]].
+   * A task which determines the classpath to use when running Mdoc.
    */
   def mdocClasspath: T[Agg[PathRef]] = T {
-    // Same as runClasspath but with mdoc added to ivyDeps from the start
-    // This prevents duplicate, differently versioned copies of scala-library ending up on the classpath which can happen when resolving separately
-    transitiveLocalClasspath() ++
-      resources() ++
-      localClasspath() ++
-      unmanagedClasspath() ++
-      mdocIvyDeps()
+    Lib.resolveDependencies(
+      repositories :+ MavenRepository(s"https://dl.bintray.com/tpolecat/maven"),
+      Lib.depToDependency(_, scalaVersion()),
+      Seq(ivy"org.scalameta::mdoc:${mdocVersion()}")
+    )
   }
 
   /**
@@ -257,48 +260,35 @@ trait MdocModule extends ScalaModule {
     ))
 
   /**
-   * The version of Mdoc to use.
-   */
-  def mdocVersion: T[String]
-
-  /**
-   * A task which determines how to fetch the Mdoc jar file and all of the dependencies required to compile documentation for the module and returns the resulting files.
-   */
-  def mdocIvyDeps: T[Agg[PathRef]] = T {
-    Lib.resolveDependencies(
-      repositories :+ MavenRepository(s"https://dl.bintray.com/tpolecat/maven"),
-      Lib.depToDependency(_, scalaVersion()),
-      compileIvyDeps() ++ transitiveIvyDeps() ++ Seq(
-        ivy"org.scalameta::mdoc:${mdocVersion()}"
-      )
-    )
-  }
-
-  /**
    * A task which performs the dependency resolution for the scalac plugins to be used with Mdoc.
    */
   def mdocPluginJars: T[Agg[PathRef]] = resolveDeps(mdocScalacPluginIvyDeps)()
+
+  private def formatClasspath(classpath: Agg[PathRef]): String =
+    classpath.map(_.path.toIO.getAbsolutePath).mkString(java.io.File.pathSeparator)
 
   /**
    * Run Mdoc using the configuration specified in this module. The working directory used is the [[mill.contrib.mdoc.MdocModule#millSourcePath]].
    */
   def mdoc: T[os.CommandResult] = T {
-    val in = mdocSourceDirectory().head.path.toIO.getAbsolutePath
     val out = mdocTargetDirectory().toIO.getAbsolutePath
-    val re = mdocNameFilter()
-    val opts = mdocScalacOptions()
-    val pOpts = mdocPluginJars().map(pathRef => "-Xplugin:" + pathRef.path.toIO.getAbsolutePath)
-    val mdocArgs = List(
-      "--in", in,
-      "--out", out,
-//      "--include", re.pattern.toString,
-      "--scalac-options", opts.mkString(" ")
-    ) ++ pOpts
     os.proc(
       'java,
-      "-cp", mdocClasspath().map(_.path.toIO.getAbsolutePath).mkString(java.io.File.pathSeparator),
+      "-classpath", formatClasspath(mdocClasspath()),
       "mdoc.Main",
-      mdocArgs
+      List(
+        "--classpath", formatClasspath(runClasspath()),
+        "--scalac-options", mdocScalacOptions().mkString(" "),
+        mdocSourceDirectory().flatMap(d => Seq(
+          "--in", d.path.toIO.getAbsolutePath,
+          "--out", out,
+        )),
+        // "--include", mdocNameFilter().pattern.toString,
+        mdocPluginJars().map(pathRef => "-Xplugin:" + pathRef.path.toIO.getAbsolutePath)
+      ).flatMap[String] {
+        case arg: String => Seq(arg)
+        case args: IterableOnce[String] => args
+      }
     ).call(millSourcePath)
   }
 }
