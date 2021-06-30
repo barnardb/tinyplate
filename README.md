@@ -20,7 +20,7 @@ TL;DR
 import tinyplate.Template
 
 val template: Template = Template("This is a {{subject.name}} {{subject.type}}")
-// template: Any => String = tinyplate.Template$$$Lambda$1296/26030311@64dfb31d
+// template: Function1[Any, String] = tinyplate.Template$$$Lambda$2361/958030392@3a0f5141
 
 val result = template(Map(
   "object" -> "success",
@@ -175,19 +175,18 @@ tinyplate.Template("This is version {{meta.versoin}}.")(Map(
 ))
 // tinyplate.TemplateException: Error at tag {{meta.versoin}}: error invoking accessor
 // 	at tinyplate.Template$.liftedTree1$1(Template.scala:17)
-// 	at tinyplate.Template$.$anonfun$dynamic$1(Template.scala:16)
-// 	at tinyplate.Template$.$anonfun$apply$15(Template.scala:65)
+// 	at tinyplate.Template$.dynamic$$anonfun$1(Template.scala:17)
+// 	at tinyplate.Template$.buildTemplate$12$$anonfun$11$$anonfun$1(Template.scala:65)
 // 	at scala.collection.immutable.List.map(List.scala:250)
 // 	at scala.collection.immutable.List.map(List.scala:79)
-// 	at tinyplate.Template$.$anonfun$apply$14(Template.scala:65)
-// 	at repl.Session$App0$$anonfun$16.apply(README.md:133)
-// 	at repl.Session$App0$$anonfun$16.apply(README.md:131)
+// 	at tinyplate.Template$.buildTemplate$13$$anonfun$12(Template.scala:65)
+// 	at repl.MdocSession$App0.$init$$$anonfun$1(README.md:142)
 // Caused by: java.util.NoSuchElementException: key not found: versoin
-// 	at scala.collection.immutable.Map$Map1.apply(Map.scala:239)
-// 	at tinyplate.Accessor$.$anonfun$apply$1(Accessor.scala:5)
+// 	at scala.collection.immutable.Map$Map1.apply(Map.scala:245)
+// 	at tinyplate.Accessor$.apply$$anonfun$1(Accessor.scala:5)
 // 	at scala.Function1.$anonfun$andThen$1(Function1.scala:85)
 // 	at tinyplate.Template$.liftedTree1$1(Template.scala:16)
-// 	... 7 more
+// 	... 6 more
 ```
 
 Phew, safe!
