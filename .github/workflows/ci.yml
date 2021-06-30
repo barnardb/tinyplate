@@ -15,7 +15,7 @@ jobs:
         java-version: 1.8
     - uses: jodersky/setup-mill@master
       with:
-        mill-version: 0.6.0
+        mill-version: 0.9.8
     - name: Run tests
       run: mill __.test
     - name: Build documentation
