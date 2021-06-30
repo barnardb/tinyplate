@@ -57,11 +57,10 @@ class LibModule(val crossScalaVersion: String) extends CrossSbtModule with MdocM
     `-Ywarn-value-discard`,
   )
 
-  object test extends Tests {
+  object test extends Tests with TestModule.ScalaTest {
     override def ivyDeps = Agg(
-      ivy"org.scalatest::scalatest::3.2.7"
+      ivy"org.scalatest::scalatest::3.2.9"
     )
-    override def testFrameworks = Seq("org.scalatest.tools.Framework")
   }
 
   override def mdocVersion = "2.2.21"
